@@ -194,5 +194,5 @@ See [`deployment-checklist.md`](deployment-checklist.md) for pre, during, and po
 ## Author
 
 **Chris Turin**  
-DevOps Engineer | Miami, FL  
+DevOps Engineer | FL  
 [GitHub: CTURIN01](https://github.com/CTURIN01)
