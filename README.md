@@ -1,95 +1,198 @@
-# DevOps Portfolio — Project 1: Containerized Django REST API with CI/CD
+# devops-portfolio
 
-A production-patterned REST API built with Django and MySQL, fully containerized with Docker, and deployed with an automated CI/CD pipeline using GitHub Actions.
+A hands-on DevOps portfolio demonstrating real infrastructure skills across CI/CD pipelines, Infrastructure as Code, Kubernetes orchestration, GitOps deployment, monitoring, and incident management. All projects are fully functional and designed to reflect production-grade practices.
 
-## 🏗️ Architecture
+---
 
-```
-GitHub Push → GitHub Actions CI → Run Tests → Build Docker Image
-                                      ↓
-                              Django REST API
-                                      ↓
-                            MySQL (Dockerized)
-```
+## Live GitOps Pipeline — ArgoCD + Kubernetes
 
-## 🛠️ Tech Stack
+![ArgoCD Resource Graph](argocd-dashboard.png)
 
-| Layer | Technology |
-|---|---|
-| API Framework | Django 5.1.5 + Django REST Framework |
-| Database | MySQL 8.0 |
-| Containerization | Docker + Docker Compose |
-| CI/CD | GitHub Actions |
-| Language | Python 3.11 |
+This repo powers a **live GitOps pipeline** running on Kubernetes via ArgoCD:
 
-## 🚀 Quick Start
+- **App Health:** ✅ Healthy
+- **Sync Status:** ✅ Synced to `main`
+- **Resources:** ConfigMap, Namespace, Service, Deployment, 2 Pods
+- **Pipeline:** `git push` → ArgoCD detects diff → auto-syncs to Kubernetes
+
+ArgoCD watches this repo's `k8s/` folder. Any change pushed to `main` is automatically applied to the cluster — no manual `kubectl apply` required.
+
+---
+
+## Projects
+
+### Project 1 — CI/CD Pipeline
+**Directory:** `project-5-cicd/`
+
+Automated build and deployment pipeline. Covers:
+- Continuous integration with automated testing
+- Docker image build and push
+- Deployment triggers on merge to main
+
+---
+
+### Project 2 — Infrastructure Provisioning (Terraform)
+**Directory:** `project-2-terraform/`
+
+Infrastructure as Code using Terraform to provision cloud resources:
+- VPC, subnets, and security groups
+- EC2/compute resource provisioning
+- State management and modular design
+
+---
+
+### Project 3 — Kubernetes Orchestration
+**Directory:** `project-3-kubernetes/`
+
+Container orchestration with Kubernetes:
+- Deployment manifests with replica management
+- Service discovery and load balancing
+- ConfigMaps and resource limits
+
+---
+
+### Project 4 — Monitoring & Observability
+**Directory:** `project-4-monitoring/`
+
+Full observability stack:
+- Metrics collection and dashboards (Grafana)
+- Alerting rules and thresholds
+- Application and infrastructure monitoring
+
+---
+
+### Project 5 — AIOps
+**Directory:** `project-5-cicd/`
+
+Intelligent operations tooling:
+- Automated anomaly detection
+- Log analysis and pattern recognition
+
+---
+
+### Project 6 — Hybrid Incident Runbook
+**Directory:** `project-6-hybrid-incident-runbook/`
+
+Production-grade incident response documentation:
+- Step-by-step runbooks for common failure scenarios
+- Escalation paths and rollback procedures
+- Post-incident review templates
+
+---
+
+## GitOps Architecture
+Developer pushes to main
+│
+▼
+GitHub (source of truth)
+│
+▼
+ArgoCD detects diff between Git state and cluster state
+│
+▼
+ArgoCD syncs — applies manifests to Kubernetes
+│
+▼
+Kubernetes runs the updated workloads
+
+text
+
+### Repo Structure
+devops-portfolio/
+├── k8s/ # Raw Kubernetes manifests
+│ ├── namespace.yaml
+│ ├── deployment.yaml
+│ ├── service.yaml
+│ └── configmap.yaml
+├── helm/ # Helm chart (templated)
+│ └── devops-app/
+│ ├── Chart.yaml
+│ ├── values.yaml
+│ └── templates/
+├── argocd/ # ArgoCD Application definitions
+│ ├── application.yaml
+│ └── app-of-apps.yaml
+├── project-2-terraform/ # IaC — Terraform
+├── project-3-kubernetes/ # Kubernetes configs
+├── project-4-monitoring/ # Grafana + alerting
+├── project-5-cicd/ # CI/CD pipeline
+├── project-6-hybrid-incident-runbook/
+├── argocd-notes.md
+├── deployment-checklist.md
+└── gitops-workflow.md
+
+text
+
+---
+
+## Stack
+
+| Tool            | Purpose                    |
+|----------------|----------------------------|
+| Kubernetes      | Container orchestration    |
+| ArgoCD          | GitOps continuous delivery |
+| Helm            | Kubernetes package management |
+| Terraform       | Infrastructure as Code     |
+| Docker          | Containerization           |
+| Grafana         | Monitoring & dashboards    |
+| GitHub Actions  | CI/CD automation           |
+| AWS             | Cloud infrastructure       |
+
+---
+
+## How to Run Locally
 
 ### Prerequisites
-- Docker & Docker Compose installed
-- Python 3.11+
+- Docker Desktop running
+- minikube installed
+- kubectl installed
 
-### Run Locally
+### Start the Cluster
 
 ```bash
-# Clone the repo
-git clone https://github.com/CTURINO01/devops-portfolio.git
-cd devops-portfolio/backend
-
-# Copy environment variables
-cp .env.example .env
-
-# Start all services
-docker-compose up --build
-
-# API is live at:
-http://localhost:8000/api/
+minikube start --driver=docker --cpus=2 --memory=4096
 ```
 
-## 📡 API Endpoints
+### Install ArgoCD
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/projects/` | List all projects |
-| POST | `/api/projects/` | Create a project |
-| GET | `/api/projects/<id>/` | Get a project |
-| PUT | `/api/projects/<id>/` | Update a project |
-| DELETE | `/api/projects/<id>/` | Delete a project |
-
-## ⚙️ CI/CD Pipeline
-
-Every push to `main` automatically:
-
-1. Spins up a MySQL 8.0 service container
-2. Installs Python dependencies
-3. Runs Django migrations
-4. Runs the test suite
-5. Builds the Docker image
-
-## 📁 Project Structure
-
-```
-devops-portfolio/
-├── .github/
-│   └── workflows/
-│       └── ci.yml          # GitHub Actions pipeline
-├── backend/
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── requirements.txt
-│   ├── manage.py
-│   ├── core/               # Django settings
-│   └── api/                # REST API app
-└── README.md
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl get pods -n argocd -w
 ```
 
-## 🔑 Environment Variables
+### Access ArgoCD UI
 
-```env
-SECRET_KEY=your-secret-key
-DEBUG=True
-DB_NAME=devops_db
-DB_USER=devops_user
-DB_PASSWORD=yourpassword
-DB_HOST=db
-DB_PORT=3306
+```bash
+# In a separate terminal
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Get admin password
+kubectl get secret argocd-initial-admin-secret \
+  -n argocd \
+  -o jsonpath="{.data.password}" | base64 -d && echo
 ```
+
+Open **https://localhost:8080** — login with `admin` and the password above.
+
+### Deploy the App
+
+```bash
+kubectl apply -f argocd/application.yaml
+```
+
+ArgoCD will sync your app from this repo automatically.
+
+---
+
+## Deployment Checklist
+
+See [`deployment-checklist.md`](deployment-checklist.md) for pre, during, and post-deployment steps.
+
+---
+
+## Author
+
+**Chris Turin**  
+DevOps Engineer | Miami, FL  
+[GitHub: CTURIN01](https://github.com/CTURIN01)
