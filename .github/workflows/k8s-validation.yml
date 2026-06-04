@@ -20,8 +20,9 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Validate Kubernetes YAML (dry run)
+      - name: Validate each manifest
         run: |
-          kubectl apply \
-            --dry-run=client \
-            -f k8s/
+          kubectl apply --dry-run=client -f k8s/namespace.yaml
+          kubectl apply --dry-run=client -f k8s/configmap.yaml
+          kubectl apply --dry-run=client -f k8s/service.yaml
+          kubectl apply --dry-run=client -f k8s/deployment.yaml
