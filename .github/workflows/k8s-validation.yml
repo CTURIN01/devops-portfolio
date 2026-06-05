@@ -15,14 +15,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
-
-      - name: Validate each manifest
+      - name: Check YAML syntax in k8s folder
         run: |
-          kubectl apply --dry-run=client --validate=false -f k8s/namespace.yaml
-          kubectl apply --dry-run=client --validate=false -f k8s/configmap.yaml
-          kubectl apply --dry-run=client --validate=false -f k8s/service.yaml
-          kubectl apply --dry-run=client --validate=false -f k8s/deployment.yaml
+          sudo apt-get update -y
+          sudo apt-get install -y yamllint
+          yamllint k8s/*.yaml
