@@ -1,3 +1,5 @@
+![CI Pipeline](https://github.com/CTURIN01/devops-portfolio/actions/workflows/ci.yml/badge.svg)
+![Validate K8s Manifests](https://github.com/CTURIN01/devops-portfolio/actions/workflows/k8s-validation.yml/badge.svg)
 # devops-portfolio
 
 A hands-on DevOps portfolio demonstrating real infrastructure skills across CI/CD pipelines, Infrastructure as Code, Kubernetes orchestration, GitOps deployment, monitoring, and incident management. All projects are fully functional and designed to reflect production-grade practices.
