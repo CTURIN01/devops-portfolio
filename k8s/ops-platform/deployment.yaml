@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ops-platform-web
+  namespace: ops-platform
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: ops-platform-web
+  template:
+    metadata:
+      labels:
+        app: ops-platform-web
+    spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox
+        command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 3; done']
+      containers:
+      - name: ops-platform-web
+        image: ghcr.io/cturin01/ops-platform:latest
+        command: ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+        ports:
+        - containerPort: 8000
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ops-platform-secret
+              key: SECRET_KEY
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ops-platform-secret
+              key: DB_PASSWORD
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: ops-platform-config
+              key: DEBUG
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: ops-platform-config
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: ops-platform-config
+              key: DB_USER
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: ops-platform-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ops-platform-config
+              key: DB_PORT
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ops-platform-service
+  namespace: ops-platform
+spec:
+  selector:
+    app: ops-platform-web
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
