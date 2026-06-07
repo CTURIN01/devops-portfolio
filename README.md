@@ -247,6 +247,6 @@ Verify Prometheus is scraping: open Prometheus UI at port 9090 and check `Status
 
 ## Author
 
-**Chris Turin**  
-DevOps Engineer | FL  
+ 
+**Chris Turin** — DevOps and Infrastructure Engineer  
 [GitHub: CTURIN01](https://github.com/CTURIN01)
