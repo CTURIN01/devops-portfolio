@@ -22,126 +22,129 @@ ArgoCD watches this repo's `k8s/` folder. Any change pushed to `main` is automat
 ---
 
 ## Projects
- 
+
 ### Project 1 — CI/CD Pipeline
-**Directory:** `project-5-cicd/`  
+
+**Directory:** `project-5-cicd/`
 **Stack:** GitHub Actions · Docker · GHCR · Kubernetes manifest validation
- 
-- Automated CI pipeline runs on every commit: builds Docker images, pushes to GitHub Container Registry (GHCR), and validates Kubernetes manifests with `kubeval`
-- Deployment triggers on merge to `main` — zero manual steps from code push to running container
-- Pipeline catches malformed YAML before it reaches the cluster
+
+- Automated CI pipeline runs on every commit: builds Docker images, pushes to GitHub Container Registry (GHCR), and validates Kubernetes manifests with `kubeval`.
+- Deployment triggers on merge to `main` — zero manual steps from code push to running container.
+- Pipeline catches malformed YAML before it reaches the cluster.
+
 ---
- 
+
 ### Project 2 — Infrastructure Provisioning (Terraform)
-**Directory:** `project-2-terraform/`  
+
+**Directory:** `project-2-terraform/`
 **Stack:** Terraform · AWS (VPC, EC2, subnets, security groups) · Remote state
- 
-- Provisions VPC, subnets, security groups, and EC2 compute resources declaratively
-- Modular design: each resource group is a separate module with its own `variables.tf` and `outputs.tf`
-- State managed remotely — no local state files, safe for team use
-- `terraform plan` output reviewed before every `apply`
+
+- Provisions VPC, subnets, security groups, and EC2 compute resources declaratively.
+- Modular design: each resource group is a separate module with its own `variables.tf` and `outputs.tf`.
+- State managed remotely — no local state files, safe for team use.
+- `terraform plan` output reviewed before every `apply`.
+
 ---
- 
+
 ### Project 3 — Kubernetes Orchestration
-<<<<<<< HEAD
-**Directory:** `project-3-kubernetes/`  
-**Stack:** Kubernetes · Django REST API · MySQL · Docker · Helm
- 
-Manifests written from scratch — no generated boilerplate:
- 
-- **Deployment:** replica management, rolling update strategy, resource requests and limits
-- **Service:** ClusterIP for internal routing, NodePort for external access
-- **ConfigMap:** non-sensitive environment configuration
-- **Secret:** base64-encoded database credentials
-- **Namespace:** resource isolation
-- **NetworkPolicy:** restricts pod-to-pod communication to defined rules
-- **InitContainer:** waits for MySQL to be ready before the Django app starts — prevents crash loops on cold start
-- **Readiness probe:** removes pod from service endpoints if the app is not ready to serve traffic
-- **Liveness probe:** restarts the container if the app becomes unresponsive
-**Failure scenario documented:**
- 
-Killed the MySQL pod while the Django app was running. The readiness probe failed within 10 seconds. Kubernetes removed the pod from the service endpoint and traffic stopped routing to it. MySQL restarted automatically. The Django pod returned to Ready state 23 seconds after the MySQL pod deletion. The gap in request metrics was visible in the Grafana dashboard. Full recovery was automatic — no manual intervention required.
- 
 
 **Directory:** `project-3-kubernetes/`
+**Stack:** Kubernetes · Django REST API · MySQL · Docker · Helm
 
-Container orchestration with Kubernetes:
-- Deployment manifests with replica management
-- Service discovery and load balancing
-- ConfigMaps and resource limits
+Manifests written from scratch — no generated boilerplate:
 
-InitContainer
-Django attempts a database connection on startup. Without the initContainer, the app pod crashes immediately on cold start because MySQL takes 15 to 20 seconds to accept connections after its pod starts. The initContainer retries the connection check every 5 seconds and only releases the main container after MySQL responds. In production, a maximum retry count and circuit breaker would be added instead of retrying indefinitely.
+- **Deployment:** replica management, rolling update strategy, resource requests and limits.
+- **Service:** ClusterIP for internal routing, NodePort for external access.
+- **ConfigMap:** non-sensitive environment configuration.
+- **Secret:** base64-encoded database credentials.
+- **Namespace:** resource isolation.
+- **NetworkPolicy:** restricts pod-to-pod communication to defined rules.
+- **InitContainer:** waits for MySQL to be ready before the Django app starts — prevents crash loops on cold start.
+- **Readiness probe:** removes pod from service endpoints if the app is not ready to serve traffic.
+- **Liveness probe:** restarts the container if the app becomes unresponsive.
 
-Readiness Probe
+**Failure scenario documented:**
+
+Killed the MySQL pod while the Django app was running. The readiness probe failed within 10 seconds. Kubernetes removed the pod from the service endpoint and traffic stopped routing to it. MySQL restarted automatically. The Django pod returned to Ready state 23 seconds after the MySQL pod deletion. The gap in request metrics was visible in the Grafana dashboard. Full recovery was automatic — no manual intervention required.
+
+**InitContainer**  
+Django attempts a database connection on startup. Without the initContainer, the app pod crashes immediately on cold start because MySQL takes 15 to 20 seconds to accept connections after its pod starts. The initContainer retries the connection check every 5 seconds and only releases the main container after MySQL responds. In production, a maximum retry count and a circuit breaker would be added instead of retrying indefinitely.
+
+**Readiness Probe**  
 Kubernetes routes traffic to a pod the moment it starts, not the moment it is ready. Without a readiness probe, requests hit the Django app before it finishes loading, causing 500 errors during deployments. The readiness probe checks the health endpoint every 10 seconds and removes the pod from the service endpoint if it fails. This behavior was observed directly when MySQL was interrupted and the affected pod stopped receiving traffic automatically.
 
-Argo CD selfHeal
-Without selfHeal, any manual kubectl apply on the cluster creates configuration drift because the live state no longer matches Git. SelfHeal detects the diff within the sync interval and reverts the cluster to the Git-declared state automatically. This enforces Git as the single source of truth and prevents the class of incidents where someone fixes a production issue manually and forgets to commit the change.
+**Argo CD selfHeal**  
+Without selfHeal, any manual `kubectl apply` on the cluster creates configuration drift because the live state no longer matches Git. SelfHeal detects the diff within the sync interval and reverts the cluster to the Git-declared state automatically. This enforces Git as the single source of truth and prevents the class of incidents where someone fixes a production issue manually and forgets to commit the change.
 
-NetworkPolicy
+**NetworkPolicy**  
 Pods can talk to each other by default in Kubernetes, which is convenient for development but dangerous in a real environment. Without a NetworkPolicy, any compromised pod in the namespace could attempt lateral movement or connect to services it should never reach. NetworkPolicy was used to restrict traffic so only the Django app could talk to MySQL on the required port, while unexpected pod-to-pod communication was blocked and the application path still worked. In production, this would be extended with default-deny ingress and egress rules for the namespace plus explicit exceptions for DNS, monitoring, and ingress traffic.
-(docs: document Kubernetes operational behavior)
+
 ---
- 
+
 ### Project 4 — Monitoring & Observability
-**Directory:** `project-4-monitoring/`  
+
+**Directory:** `project-4-monitoring/`
 **Stack:** Prometheus · Grafana · Helm · Alertmanager · Kubernetes
- 
+
 Full observability stack deployed via Helm:
- 
-- **Metrics collection:** Prometheus scrapes Kubernetes node, pod, and container metrics on a 15-second interval
-- **Dashboards:** Grafana dashboards surface CPU usage, memory consumption, pod restart counts, and HTTP request rates
-- **Alerting rules:** Prometheus alert fires when pod CPU exceeds 80% for more than 2 minutes
-- **Log correlation:** pod logs reviewed alongside metrics to identify root cause during incidents
+
+- **Metrics collection:** Prometheus scrapes Kubernetes node, pod, and container metrics on a 15-second interval.
+- **Dashboards:** Grafana dashboards surface CPU usage, memory consumption, pod restart counts, and HTTP request rates.
+- **Alerting rules:** Prometheus alert fires when pod CPU exceeds 80% for more than 2 minutes.
+- **Log correlation:** pod logs reviewed alongside metrics to identify root cause during incidents.
+
 **PromQL queries used:**
- 
+
 ```promql
 # CPU usage by pod
 rate(container_cpu_usage_seconds_total{namespace="default"}[5m])
- 
+
 # Memory usage by pod
 container_memory_usage_bytes{namespace="default", container!="POD"}
- 
+
 # Pod restart count
 increase(kube_pod_container_status_restarts_total[1h])
- 
+
 # HTTP request rate (Django app)
 rate(django_http_requests_total[5m])
 ```
- 
+
 **Failure scenario documented:**
- 
+
 Deleted a running pod manually with `kubectl delete pod`. Grafana showed a spike in pod restarts and a gap in HTTP request metrics during the 8-second window before Kubernetes scheduled a replacement. The alert rule for pod restart count fired correctly. Documented the detection-to-recovery timeline in the incident runbook.
- 
+
 ---
- 
+
 ### Project 5 — AIOps
-**Directory:** `project-5-cicd/`  
+
+**Directory:** `project-5-cicd/`
 **Stack:** Python · log analysis · anomaly detection
- 
-- Automated log analysis pipeline flags anomalous patterns in application logs
-- Uses statistical baseline comparison to surface outliers without manual threshold tuning
+
+- Automated log analysis pipeline flags anomalous patterns in application logs.
+- Uses statistical baseline comparison to surface outliers without manual threshold tuning.
+
 ---
- 
+
 ### Project 6 — Hybrid Cloud Incident Runbook
-**Directory:** `project-6-hybrid-incident-runbook/`  
+
+**Directory:** `project-6-hybrid-incident-runbook/`
 **Stack:** Terraform · AWS VPC · GCP VPC · GitHub Actions
- 
+
 Production-grade incident response documentation covering two cloud environments:
- 
-- **SEV-1/2/3 triage checklists:** step-by-step investigation paths for each severity level
-- **Communication templates:** internal and external stakeholder updates at each incident stage
-- **Recovery procedures:** rollback steps for deployment failures, database issues, and network partitions
-- **Post-incident review template:** pre-filled structure for blameless postmortems
-- **Deployment checklist:** pre, during, and post-deployment verification steps
+
+- **SEV-1/2/3 triage checklists:** step-by-step investigation paths for each severity level.
+- **Communication templates:** internal and external stakeholder updates at each incident stage.
+- **Recovery procedures:** rollback steps for deployment failures, database issues, and network partitions.
+- **Post-incident review template:** pre-filled structure for blameless postmortems.
+- **Deployment checklist:** pre, during, and post-deployment verification steps.
+
 Built after provisioning symmetric AWS and GCP VPC infrastructure with Terraform to understand cross-cloud failure modes.
- 
+
 ---
- 
+
 ## GitOps Architecture
- 
-```
+
+```text
 Developer pushes to main
         │
         ▼
@@ -157,12 +160,12 @@ Argo CD syncs — applies manifests to Kubernetes
 Kubernetes runs the updated workloads
 selfHeal corrects any drift automatically
 ```
- 
+
 ---
- 
+
 ## Repo Structure
- 
-```
+
+```text
 devops-portfolio/
 ├── k8s/                          # Raw Kubernetes manifests
 │   ├── namespace.yaml
@@ -188,11 +191,11 @@ devops-portfolio/
 ├── deployment-checklist.md
 └── gitops-workflow.md
 ```
- 
+
 ---
- 
+
 ## Stack
- 
+
 | Tool | Purpose |
 |---|---|
 | Kubernetes | Container orchestration |
@@ -206,68 +209,67 @@ devops-portfolio/
 | GHCR | Container image registry |
 | AWS | Cloud infrastructure |
 | GCP | Hybrid cloud infrastructure |
- 
+
 ---
- 
+
 ## How to Run Locally
- 
+
 ### Prerequisites
 - Docker Desktop running
 - minikube installed
 - kubectl installed
+
 ### Start the Cluster
- 
+
 ```bash
 minikube start --driver=docker --cpus=2 --memory=4096
 ```
- 
+
 ### Install Argo CD
- 
+
 ```bash
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl get pods -n argocd -w
 ```
- 
+
 ### Access Argo CD UI
- 
+
 ```bash
 kubectl port-forward svc/argocd-server -n argocd 8080:443
- 
+
 kubectl get secret argocd-initial-admin-secret \
   -n argocd \
   -o jsonpath="{.data.password}" | base64 -d && echo
 ```
- 
+
 Open `https://localhost:8080` — login with `admin` and the password above.
- 
+
 ### Deploy the App
- 
+
 ```bash
 kubectl apply -f argocd/application.yaml
 ```
- 
+
 Argo CD syncs the app from this repo automatically.
- 
+
 ---
- 
+
 ## Troubleshooting
- 
-**Argo CD shows OutOfSync after push**
-Wait 3 minutes for the default sync interval. Force a manual sync: `argocd app sync devops-app`
- 
-**MySQL pod not starting**
-Check the initContainer logs: `kubectl logs <django-pod> -c init-wait-for-mysql`
+
+**Argo CD shows OutOfSync after push**  
+Wait 3 minutes for the default sync interval. Force a manual sync: `argocd app sync devops-app`.
+
+**MySQL pod not starting**  
+Check the initContainer logs: `kubectl logs <django-pod> -c init-wait-for-mysql`.  
 The initContainer retries every 5 seconds until MySQL accepts connections.
- 
-**Grafana dashboards empty**
-Verify Prometheus is scraping: open Prometheus UI at port 9090 and check `Status > Targets`
- 
+
+**Grafana dashboards empty**  
+Verify Prometheus is scraping: open Prometheus UI at port 9090 and check `Status > Targets`.
+
 ---
- 
 
 ## Author
 
- 
 **Chris Turin** — DevOps and Infrastructure Engineer  
 [GitHub: CTURIN01](https://github.com/CTURIN01)
