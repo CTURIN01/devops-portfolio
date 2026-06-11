@@ -62,7 +62,7 @@ Manifests written from scratch — no generated boilerplate:
  
 Killed the MySQL pod while the Django app was running. The readiness probe failed within 10 seconds. Kubernetes removed the pod from the service endpoint and traffic stopped routing to it. MySQL restarted automatically. The Django pod returned to Ready state 23 seconds after the MySQL pod deletion. The gap in request metrics was visible in the Grafana dashboard. Full recovery was automatic — no manual intervention required.
  
-=======
+
 **Directory:** `project-3-kubernetes/`
 
 Container orchestration with Kubernetes:
@@ -81,8 +81,7 @@ Without selfHeal, any manual kubectl apply on the cluster creates configuration 
 
 NetworkPolicy
 Pods can talk to each other by default in Kubernetes, which is convenient for development but dangerous in a real environment. Without a NetworkPolicy, any compromised pod in the namespace could attempt lateral movement or connect to services it should never reach. NetworkPolicy was used to restrict traffic so only the Django app could talk to MySQL on the required port, while unexpected pod-to-pod communication was blocked and the application path still worked. In production, this would be extended with default-deny ingress and egress rules for the namespace plus explicit exceptions for DNS, monitoring, and ingress traffic.
-
-f5866cf (docs: document Kubernetes operational behavior)
+(docs: document Kubernetes operational behavior)
 ---
  
 ### Project 4 — Monitoring & Observability
