@@ -43,6 +43,7 @@ ArgoCD watches this repo's `k8s/` folder. Any change pushed to `main` is automat
 ---
  
 ### Project 3 — Kubernetes Orchestration
+<<<<<<< HEAD
 **Directory:** `project-3-kubernetes/`  
 **Stack:** Kubernetes · Django REST API · MySQL · Docker · Helm
  
@@ -61,6 +62,27 @@ Manifests written from scratch — no generated boilerplate:
  
 Killed the MySQL pod while the Django app was running. The readiness probe failed within 10 seconds. Kubernetes removed the pod from the service endpoint and traffic stopped routing to it. MySQL restarted automatically. The Django pod returned to Ready state 23 seconds after the MySQL pod deletion. The gap in request metrics was visible in the Grafana dashboard. Full recovery was automatic — no manual intervention required.
  
+=======
+**Directory:** `project-3-kubernetes/`
+
+Container orchestration with Kubernetes:
+- Deployment manifests with replica management
+- Service discovery and load balancing
+- ConfigMaps and resource limits
+
+InitContainer
+Django attempts a database connection on startup. Without the initContainer, the app pod crashes immediately on cold start because MySQL takes 15 to 20 seconds to accept connections after its pod starts. The initContainer retries the connection check every 5 seconds and only releases the main container after MySQL responds. In production, a maximum retry count and circuit breaker would be added instead of retrying indefinitely.
+
+Readiness Probe
+Kubernetes routes traffic to a pod the moment it starts, not the moment it is ready. Without a readiness probe, requests hit the Django app before it finishes loading, causing 500 errors during deployments. The readiness probe checks the health endpoint every 10 seconds and removes the pod from the service endpoint if it fails. This behavior was observed directly when MySQL was interrupted and the affected pod stopped receiving traffic automatically.
+
+Argo CD selfHeal
+Without selfHeal, any manual kubectl apply on the cluster creates configuration drift because the live state no longer matches Git. SelfHeal detects the diff within the sync interval and reverts the cluster to the Git-declared state automatically. This enforces Git as the single source of truth and prevents the class of incidents where someone fixes a production issue manually and forgets to commit the change.
+
+NetworkPolicy
+Pods can talk to each other by default in Kubernetes, which is convenient for development but dangerous in a real environment. Without a NetworkPolicy, any compromised pod in the namespace could attempt lateral movement or connect to services it should never reach. NetworkPolicy was used to restrict traffic so only the Django app could talk to MySQL on the required port, while unexpected pod-to-pod communication was blocked and the application path still worked. In production, this would be extended with default-deny ingress and egress rules for the namespace plus explicit exceptions for DNS, monitoring, and ingress traffic.
+
+f5866cf (docs: document Kubernetes operational behavior)
 ---
  
 ### Project 4 — Monitoring & Observability
