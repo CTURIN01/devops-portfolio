@@ -58,25 +58,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database — uses SQLite on Railway, MySQL locally if DB_NAME is set
-DB_NAME = config('DB_NAME', default=None)
-
-if DB_NAME:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME,
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST', default='db'),
-            'PORT': config('DB_PORT', default='3306'),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+import dj_database_url
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:////tmp/db.sqlite3')
+DATABASES = {'default': dj_database_url.config(default=DATABASE_URL)}
     }
 
 AUTH_PASSWORD_VALIDATORS = [
