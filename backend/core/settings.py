@@ -3,14 +3,15 @@ Django settings for core project.
 Updated for Railway deployment.
 """
 
+import os
 from pathlib import Path
-from decouple import config
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-portfolio-2026-local-only')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-portfolio-2026-local-only')
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -42,7 +43,6 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
-        'APP_LIBS': True,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -57,11 +57,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database — uses SQLite on Railway, MySQL locally if DB_NAME is set
-import dj_database_url
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:////tmp/db.sqlite3')
-DATABASES = {'default': dj_database_url.config(default=DATABASE_URL)}
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        default='sqlite:////tmp/db.sqlite3',
+        conn_max_age=600
+    )
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
